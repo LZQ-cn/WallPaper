@@ -1,6 +1,3 @@
-"""
-要实现多进程、多网址
-"""
 import os
 import re
 import urllib
