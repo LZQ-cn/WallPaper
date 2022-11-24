@@ -1,12 +1,9 @@
-<<<<<<< HEAD
 """
 要实现多进程、多网址
 """
-import re
-import urllib
-=======
 import os
 import re
+import urllib
 from threading import Lock
 from platform import system
 from http.client import HTTPResponse
@@ -54,17 +51,13 @@ def get_file(FileLock: Lock) -> str:
     FileLock.release()      # 解锁
 
     return path
->>>>>>> cc6ce13 (µSHOP-UNCLE)
 
 
 class WallPaperSpider:
     """
     壁纸爬虫类
     """
-<<<<<<< HEAD
-    pass
-=======
-
+    
     """
     同时只能爬取同一个网址
 
@@ -284,4 +277,3 @@ if __name__ == "__main__":
     程序入口
     """
     main()
->>>>>>> cc6ce13 (µSHOP-UNCLE)
