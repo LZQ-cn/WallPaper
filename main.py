@@ -3,8 +3,9 @@ import re
 import urllib
 from threading import Lock
 from platform import system
+from threading import Thread
+from multiprocessing import Queue
 from http.client import HTTPResponse
-from multiprocessing import Process, Queue
 from urllib.request import Request, urlopen
 
 
@@ -59,7 +60,7 @@ class WallPaperSpider:
     同时只能爬取同一个网址
 
     但是内含的图片的地址可以储存在一个 Queue 对象中, 
-        每次可以开启多个进程进行下载并保存
+        每次可以开启多个线程进行下载并保存
 
     下载时的路径应该为一个文件夹路径, 应该在类的外部编写一个函数来检测文件夹是否存在否则就创建
     保存的文件名应该依次为 1.jpg, 2.jpg, 等
@@ -83,8 +84,8 @@ class WallPaperSpider:
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"
             }
 
-        # 进程相关变量
-        self.process_num: int = 1       # 开启的进程数量
+        # 线程相关变量
+        self.thread_num: int = 1        # 开启的线程数量
 
         # 保存相关变量
         self.path: str = None           # 图片保存目录 (应该为文件夹)
@@ -142,30 +143,30 @@ class WallPaperSpider:
 
     def hand_up(self) -> None:
         """
-        开启进程, 爬取并保存图片
+        开启线程, 爬取并保存图片
         """
-        processes: list = list()
+        threads: list = list()
 
-        url_num: int = (self.pic_urls.qsize() // self.process_num) + 1
+        url_num: int = (self.pic_urls.qsize() // self.thread_num) + 1
 
-        for count in range(self.process_num):
+        for count in range(self.thread_num):
             _urls: list = []
             for _ in range(url_num):
                 if not self.pic_urls.empty():
                     _urls.append(self.pic_urls.get_nowait())
 
-            _name="Process-%d" % (count + 1)
+            _name="THREAD-%d" % (count + 1)
 
-            # "创造"进程
-            processes.append(Process(target=self.save, name=_name,
+            # "创造"线程
+            threads.append(Thread(target=self.save, name=_name,
                                      args=(_urls, _name)))
             
-        # "启动"进程
-        for process in processes:
-            process.start()
+        # "启动"线程
+        for thread in threads:
+            thread.start()
         
-        for process in processes:
-            process.join()
+        for thread in threads:
+            thread.join()
 
     def run(self) -> bool:
         """
@@ -216,23 +217,23 @@ class WallPaperSpider:
         
         """ END """
 
-        """ 确定进程数量 """
+        """ 确定线程数量 """
         if self.pic_urls.qsize() <= 10:
-            self.process_num = 1
+            self.thread_num = 1
         
         else:
-            process_num: int = input("将会下载 %d 张壁纸, 您希望开启多少个进程: " % self.pic_urls.qsize())
+            thread_num: int = input("将会下载 %d 张壁纸, 您希望开启多少个线程: " % self.pic_urls.qsize())
             while 1:
                 try:
-                    process_num = int(process_num)
+                    thread_num = int(thread_num)
                 
                 except ValueError:
-                    process_num: int = input("请正确输入: ")
+                    thread_num: int = input("请正确输入: ")
                 
                 else:
                     break
 
-            self.process_num = process_num
+            self.thread_num = thread_num
 
         """ END """
 
@@ -267,6 +268,8 @@ def main() -> None:
             break
 
     spider.run()
+
+    print("\n\n完毕...\n")
 
 
 if __name__ == "__main__":
